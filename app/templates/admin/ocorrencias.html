@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Ocorrências — Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-list-check text-warning"></i> Gerenciar Ocorrências</h2>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="mb-3">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('admin.ocorrencias') }}"
+           class="btn btn-sm {{ 'btn-warning' if not current_status else 'btn-outline-secondary' }}">
+            Todos
+        </a>
+        {% for value, label in statuses %}
+        <a href="{{ url_for('admin.ocorrencias', status=value) }}"
+           class="btn btn-sm {{ 'btn-warning' if current_status == value else 'btn-outline-secondary' }}">
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if reports %}
+{% for report in reports %}
+<div class="card mb-3 fade-in">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-secondary fs-6">#{{ report.id }}</span>
+                    <div>
+                        <h6 class="mb-0 text-light">{{ report.category_label }}</h6>
+                        <small class="text-muted">{{ report.description[:80] }}{% if report.description|length > 80 %}...{% endif %}</small>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-person"></i> {{ report.reporter_name }} •
+                        <i class="bi bi-calendar"></i> {{ report.created_at.strftime('%d/%m/%Y %H:%M') }} •
+                        <i class="bi bi-geo-alt"></i> {{ report.latitude }}, {{ report.longitude }}
+                        {% if report.reporter_email %}
+                        • <i class="bi bi-envelope"></i> {{ report.reporter_email }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                    <!-- Status -->
+                    <form method="POST" action="{{ url_for('admin.atualizar_status', report_id=report.id) }}"
+                          class="d-flex gap-1 align-items-center">
+                        <select name="status" class="form-select form-select-sm" style="width: auto;">
+                            {% for value, label in statuses %}
+                            <option value="{{ value }}" {{ 'selected' if report.status == value else '' }}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-warning" title="Atualizar status">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+
+                    <!-- Enviar e-mail -->
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#emailModal{{ report.id }}"
+                            title="Enviar por e-mail">
+                        <i class="bi bi-envelope"></i> E-mail
+                    </button>
+
+                    <!-- Ver detalhes -->
+                    <a href="{{ url_for('reports.detalhe', report_id=report.id) }}"
+                       class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de e-mail -->
+<div class="modal fade" id="emailModal{{ report.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="bi bi-envelope text-warning"></i> Enviar Ocorrência #{{ report.id }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.enviar_email', report_id=report.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Destinatário (e-mail)</label>
+                        <input type="email" class="form-control" name="destinatario" required
+                               placeholder="admin.vicentepires@df.gov.br">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem adicional (opcional)</label>
+                        <textarea class="form-control" name="mensagem" rows="3"
+                                  placeholder="Observações adicionais..."></textarea>
+                    </div>
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle"></i>
+                        Os dados da ocorrência (tipo, descrição, coordenadas, data) serão incluídos automaticamente.
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-send"></i> Enviar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Paginação -->
+{% if pagination.pages > 1 %}
+<nav aria-label="Paginação" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.ocorrencias', page=pagination.prev_num, status=current_status) }}">Anterior</a>
+        </li>
+        {% endif %}
+        {% for p in pagination.iter_pages() %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                <a class="page-link" href="{{ url_for('admin.ocorrencias', page=p, status=current_status) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.ocorrencias', page=pagination.next_num, status=current_status) }}">Próxima</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+    <p class="text-muted mt-3">Nenhuma ocorrência encontrada.</p>
+</div>
+{% endif %}
+{% endblock %}

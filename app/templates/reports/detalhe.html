@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Ocorrência #{{ report.id }} — Ilumina VP{% endblock %}
+
+{% block extra_head %}
+<style>
+    #map-detail { height: 300px; border-radius: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <a href="{{ url_for('reports.lista') }}" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h3>Ocorrência #{{ report.id }}</h3>
+                    {% if report.status == 'pendente' %}
+                    <span class="badge bg-warning text-dark fs-6">{{ report.status_label }}</span>
+                    {% elif report.status == 'em_analise' %}
+                    <span class="badge bg-info fs-6">{{ report.status_label }}</span>
+                    {% else %}
+                    <span class="badge bg-success fs-6">{{ report.status_label }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <p><strong>Tipo:</strong> {{ report.category_label }}</p>
+                    <p><strong>Descrição:</strong> {{ report.description }}</p>
+                    <p><strong>Reportado por:</strong> {{ report.reporter_name }}</p>
+                    {% if report.reporter_email %}
+                    <p><strong>E-mail para contato:</strong> {{ report.reporter_email }}</p>
+                    {% endif %}
+                    <p><strong>Data:</strong> {{ report.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+                    <p><strong>Coordenadas:</strong> {{ report.latitude }}, {{ report.longitude }}</p>
+                </div>
+
+                <div id="map-detail" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const map = L.map('map-detail').setView([{{ report.latitude }}, {{ report.longitude }}], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    L.marker([{{ report.latitude }}, {{ report.longitude }}]).addTo(map)
+        .bindPopup('{{ report.category_label }}').openPopup();
+</script>
+{% endblock %}

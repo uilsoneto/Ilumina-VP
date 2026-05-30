@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Ilumina VP — Mapeamento de Iluminação Pública{% endblock %}
+
+{% block extra_head %}
+<style>
+    #map-home {
+        height: calc(100vh - 70px);
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        margin: 0;
+    }
+
+    .map-container {
+        margin: -1.5rem -0.75rem 0;
+        position: relative;
+    }
+
+    .map-legend {
+        position: absolute;
+        bottom: 30px;
+        left: 20px;
+        z-index: 1000;
+    }
+
+    .map-legend .card {
+        background: rgba(15, 15, 26, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border-color);
+    }
+
+    .map-btn-report {
+        position: absolute;
+        bottom: 30px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    /* Popup form styling */
+    .leaflet-popup-content-wrapper {
+        background: #1a1a2e;
+        color: #f0f0f0;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .leaflet-popup-tip {
+        background: #1a1a2e;
+    }
+
+    .leaflet-popup-content {
+        margin: 12px 16px;
+        min-width: 260px;
+    }
+
+    .leaflet-popup-content a {
+        color: #ffc107;
+    }
+
+    .popup-form .form-control,
+    .popup-form .form-select {
+        background: #0f0f1a;
+        border-color: #2a2a4a;
+        color: #f0f0f0;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .popup-form .form-control:focus,
+    .popup-form .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.15);
+    }
+
+    .popup-form .form-label {
+        font-size: 0.75rem;
+        color: #a0a0b0;
+        margin-bottom: 0.2rem;
+    }
+
+    .popup-form .btn-warning {
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+    }
+
+    /* User location pulse */
+    .user-location-marker {
+        width: 18px;
+        height: 18px;
+        background: #4285f4;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.3), 0 2px 8px rgba(0,0,0,0.4);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.3), 0 2px 8px rgba(0,0,0,0.4); }
+        50% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0.1), 0 2px 8px rgba(0,0,0,0.4); }
+        100% { box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.3), 0 2px 8px rgba(0,0,0,0.4); }
+    }
+
+    @media (max-width: 768px) {
+        .map-legend {
+            bottom: 80px;
+            left: 10px;
+        }
+
+        .map-btn-report {
+            bottom: 20px;
+            right: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-container">
+    <div id="map-home"></div>
+
+    <!-- Legenda -->
+    <div class="map-legend">
+        <div class="card">
+            <div class="card-body p-2 px-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <small class="text-muted fw-bold me-1">Legenda:</small>
+                    <span class="badge bg-danger small">Poste Apagado</span>
+                    <span class="badge small" style="background:#6f42c1;">Área Escura</span>
+                    <span class="badge bg-warning text-dark small">Ilum. Fraca</span>
+                    <span class="badge bg-info small">Poste Danificado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão lista -->
+    <div class="map-btn-report">
+        <a href="{{ url_for('reports.lista') }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-list-ul"></i> Ver Lista
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const map = L.map('map-home').setView([-15.8007, -48.0206], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const categoryColors = {
+        'Poste Apagado': '#dc3545',
+        'Área Escura': '#6f42c1',
+        'Iluminação Fraca': '#ffc107',
+        'Poste Danificado': '#0dcaf0'
+    };
+
+    function createIcon(color) {
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px rgba(0,0,0,0.5);"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+    }
+
+    // Marcador de localização do usuário
+    const userIcon = L.divIcon({
+        className: '',
+        html: '<div class="user-location-marker"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+
+    // Mostra localização atual do usuário com balão
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            const userLat = pos.coords.latitude;
+            const userLng = pos.coords.longitude;
+
+            map.setView([userLat, userLng], 16);
+
+            const userMarker = L.marker([userLat, userLng], {icon: userIcon}).addTo(map);
+            userMarker.bindPopup(`
+                <div style="text-align:center;">
+                    <h6 style="margin:0 0 4px; color:#ffc107;">
+                        <i class="bi bi-lightbulb-fill"></i> Ilumina VP
+                    </h6>
+                    <p style="margin:0 0 4px; font-size:0.85rem;">
+                        Clique no mapa para reportar um<br>problema de iluminação.
+                    </p>
+                    <small style="color:#a0a0b0;">Vicente Pires, DF</small>
+                </div>
+            `).openPopup();
+        }, function() {
+            // Se não conseguir geolocalização, mostra balão no centro
+            showDefaultPopup();
+        });
+    } else {
+        showDefaultPopup();
+    }
+
+    function showDefaultPopup() {
+        L.popup()
+            .setLatLng([-15.8007, -48.0206])
+            .setContent(`
+                <div style="text-align:center;">
+                    <h6 style="margin:0 0 4px; color:#ffc107;">
+                        <i class="bi bi-lightbulb-fill"></i> Ilumina VP
+                    </h6>
+                    <p style="margin:0 0 4px; font-size:0.85rem;">
+                        Clique no mapa para reportar um<br>problema de iluminação.
+                    </p>
+                    <small style="color:#a0a0b0;">Vicente Pires, DF</small>
+                </div>
+            `)
+            .openOn(map);
+    }
+
+    // Carrega ocorrências existentes
+    fetch('/api/reports')
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(report => {
+                const color = categoryColors[report.category] || '#dc3545';
+                const marker = L.marker([report.lat, report.lng], {icon: createIcon(color)}).addTo(map);
+                marker.bindPopup(`
+                    <strong>${report.category}</strong><br>
+                    <small>${report.description}</small><br>
+                    <hr style="margin:6px 0; border-color:#2a2a4a;">
+                    <small><b>Status:</b> ${report.status}</small><br>
+                    <small><b>Por:</b> ${report.reporter}</small><br>
+                    <small><b>Data:</b> ${report.created_at}</small><br>
+                    <a href="/reports/${report.id}" class="btn btn-sm btn-outline-warning mt-2 w-100">Ver Detalhes</a>
+                `);
+            });
+        });
+
+    // Clique no mapa abre popup com formulário
+    let newMarker = null;
+
+    map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        if (newMarker) {
+            map.removeLayer(newMarker);
+        }
+
+        newMarker = L.marker(e.latlng).addTo(map);
+
+        const formHtml = `
+            <form class="popup-form" method="POST" action="/reports/novo">
+                <h6 style="color:#ffc107; margin-bottom:8px;"><i class="bi bi-plus-circle"></i> Nova Ocorrência</h6>
+                <input type="hidden" name="latitude" value="${lat}">
+                <input type="hidden" name="longitude" value="${lng}">
+                <div class="mb-2">
+                    <label class="form-label">Seu nome (opcional)</label>
+                    <input type="text" class="form-control" name="reporter_name" placeholder="Anônimo">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">E-mail para retorno (opcional)</label>
+                    <input type="email" class="form-control" name="reporter_email" placeholder="seu@email.com">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Tipo de problema</label>
+                    <select class="form-select" name="category" required>
+                        <option value="poste_apagado">Poste Apagado</option>
+                        <option value="area_escura">Área Escura</option>
+                        <option value="iluminacao_fraca">Iluminação Fraca</option>
+                        <option value="poste_danificado">Poste Danificado</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-control" name="description" rows="2" required placeholder="Descreva o problema..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-warning btn-sm w-100">
+                    <i class="bi bi-check-circle"></i> Registrar
+                </button>
+            </form>
+        `;
+
+        newMarker.bindPopup(formHtml, {maxWidth: 300, minWidth: 280}).openPopup();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa — Ilumina VP{% endblock %}
+
+{% block extra_head %}
+<style>
+    #map { height: 70vh; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-map"></i> Mapa de Ocorrências</h2>
+    <a href="{{ url_for('reports.novo') }}" class="btn btn-warning">
+        <i class="bi bi-plus-circle"></i> Nova Ocorrência
+    </a>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="card-body p-2">
+        <div id="map"></div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+            <span class="badge bg-danger"><i class="bi bi-circle-fill"></i> Poste Apagado</span>
+            <span class="badge" style="background-color: #6f42c1;"><i class="bi bi-circle-fill"></i> Área Escura</span>
+            <span class="badge bg-warning text-dark"><i class="bi bi-circle-fill"></i> Iluminação Fraca</span>
+            <span class="badge bg-info"><i class="bi bi-circle-fill"></i> Poste Danificado</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const map = L.map('map').setView([-15.8007, -48.0206], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const categoryColors = {
+        'Poste Apagado': '#dc3545',
+        'Área Escura': '#6f42c1',
+        'Iluminação Fraca': '#ffc107',
+        'Poste Danificado': '#0dcaf0'
+    };
+
+    function createIcon(color) {
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background:${color}; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>`,
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+    }
+
+    fetch('/api/reports')
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(report => {
+                const color = categoryColors[report.category] || '#dc3545';
+                const marker = L.marker([report.lat, report.lng], {icon: createIcon(color)}).addTo(map);
+                marker.bindPopup(`
+                    <strong>${report.category}</strong><br>
+                    <small>${report.description}</small><br>
+                    <hr style="margin:4px 0">
+                    <small><b>Status:</b> ${report.status}</small><br>
+                    <small><b>Por:</b> ${report.reporter}</small><br>
+                    <small><b>Data:</b> ${report.created_at}</small><br>
+                    <a href="/reports/${report.id}" class="btn btn-sm btn-outline-primary mt-1">Detalhes</a>
+                `);
+            });
+        });
+</script>
+{% endblock %}

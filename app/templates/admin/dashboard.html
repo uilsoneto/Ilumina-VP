@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin — Ilumina VP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-speedometer2 text-warning"></i> Painel Administrativo</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.exportar') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i> Exportar CSV
+        </a>
+        <a href="{{ url_for('admin.logout') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-box-arrow-right"></i> Sair
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card">
+            <div class="card-body stat-card">
+                <div class="stat-number">{{ total }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card" style="border-color: var(--accent);">
+            <div class="card-body stat-card">
+                <div class="stat-number" style="color: #ffc107;">{{ pendentes }}</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card" style="border-color: var(--info);">
+            <div class="card-body stat-card">
+                <div class="stat-number" style="color: #17a2b8;">{{ em_analise }}</div>
+                <div class="stat-label">Em Análise</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card" style="border-color: var(--success);">
+            <div class="card-body stat-card">
+                <div class="stat-number" style="color: #28a745;">{{ resolvidos }}</div>
+                <div class="stat-label">Resolvidos</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning-fill text-warning"></i> Ações Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.ocorrencias') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-list-check"></i> Gerenciar Ocorrências
+                    </a>
+                    <a href="{{ url_for('admin.ocorrencias', status='pendente') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-exclamation-triangle text-warning"></i> Ver Pendentes ({{ pendentes }})
+                    </a>
+                    <a href="{{ url_for('admin.exportar') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Relatório CSV
+                    </a>
+                    <a href="{{ url_for('main.mapa') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-map"></i> Ver Mapa Público
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history text-warning"></i> Últimas Ocorrências</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for report in reports[:5] %}
+                    <div class="list-group-item bg-transparent border-bottom" style="border-color: var(--border-color) !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="text-light">#{{ report.id }}</strong>
+                                <span class="text-muted ms-2">{{ report.category_label }}</span>
+                            </div>
+                            {% if report.status == 'pendente' %}
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                            {% elif report.status == 'em_analise' %}
+                            <span class="badge bg-info">Em Análise</span>
+                            {% else %}
+                            <span class="badge bg-success">Resolvido</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ report.created_at.strftime('%d/%m/%Y') }} — {{ report.reporter_name }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
