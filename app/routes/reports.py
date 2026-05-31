@@ -44,14 +44,10 @@ def novo():
         db.session.add(report)
         db.session.commit()
 
-        # Envia e-mail para ouvidoria
-        email_sent = send_report_email(report)
+        # Envia e-mail para ouvidoria (silencioso se SMTP não configurado)
+        send_report_email(report)
 
-        if email_sent:
-            flash("Ocorrência registrada e encaminhada para a ouvidoria!", "success")
-        else:
-            flash("Ocorrência registrada! (E-mail será enviado quando o SMTP estiver configurado)", "success")
-
+        flash("Ocorrência registrada com sucesso! Obrigado por contribuir.", "success")
         return redirect(url_for("main.index"))
 
     return render_template("reports/novo.html", categories=Report.CATEGORIES)

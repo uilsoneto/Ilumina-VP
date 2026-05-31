@@ -5,15 +5,30 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <h2><i class="bi bi-info-circle"></i> Sobre o Projeto</h2>
+        <h2><i class="bi bi-info-circle text-warning"></i> Sobre o Projeto</h2>
 
-        <div class="card bg-dark border-secondary mt-4">
-            <div class="card-body">
+        <div class="card mt-4">
+            <div class="card-body" style="color: #f0f0f0;">
                 <h4 class="text-warning">Ilumina VP</h4>
                 <p>
-                    Web App Colaborativo para Mapeamento de Pontos com Baixa Iluminação Pública
-                    no Setor Vicente Pires, Distrito Federal.
+                    O <strong>Ilumina VP</strong> é um Web App colaborativo que permite aos moradores do
+                    Setor Vicente Pires, Distrito Federal, reportar problemas de iluminação pública
+                    de forma rápida e georreferenciada — sem necessidade de cadastro.
                 </p>
+                <p>
+                    Ao clicar no mapa, o cidadão registra a ocorrência (poste apagado, área escura,
+                    iluminação fraca ou poste danificado) e o sistema encaminha automaticamente os dados
+                    por e-mail para a Administração Regional de Vicente Pires e para a Neoenergia Brasília,
+                    facilitando a manutenção e tornando a comunidade mais segura.
+                </p>
+
+                <h5 class="mt-4">Como funciona</h5>
+                <ol>
+                    <li>Acesse o mapa — sua localização é exibida automaticamente.</li>
+                    <li>Clique no ponto com problema de iluminação.</li>
+                    <li>Preencha o tipo, descrição e (opcionalmente) seu nome e e-mail.</li>
+                    <li>A ocorrência é registrada e enviada para os órgãos responsáveis.</li>
+                </ol>
 
                 <h5 class="mt-4">Objetivos</h5>
                 <ul>
@@ -21,9 +36,24 @@
                         geolocalização, locais com iluminação pública inexistente ou deficitária.</li>
                     <li>Gerar um inventário digital georreferenciado dos postes apagados ou áreas
                         escuras em Vicente Pires.</li>
-                    <li>Facilitar o canal de comunicação entre a comunidade e a Administração Regional,
-                        entregando dados estruturados para otimizar as rondas de manutenção.</li>
+                    <li>Facilitar o canal de comunicação entre a comunidade e os órgãos responsáveis
+                        (Administração Regional de Vicente Pires e Neoenergia Brasília), entregando
+                        dados estruturados via e-mail automático para otimizar as rondas de manutenção.</li>
+                    <li>Promover a inclusão digital ao permitir que qualquer cidadão participe
+                        ativamente do mapeamento colaborativo usando apenas um navegador web.</li>
                 </ul>
+
+                <h5 class="mt-4">Tecnologias</h5>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge bg-secondary">Python / Flask</span>
+                    <span class="badge bg-secondary">SQLite</span>
+                    <span class="badge bg-secondary">Leaflet.js</span>
+                    <span class="badge bg-secondary">OpenStreetMap</span>
+                    <span class="badge bg-secondary">Bootstrap 5</span>
+                    <span class="badge bg-secondary">SMTP Gmail</span>
+                    <span class="badge bg-secondary">Docker</span>
+                    <span class="badge bg-secondary">Kubernetes (k3s)</span>
+                </div>
 
                 <h5 class="mt-4">ODS Relacionados</h5>
                 <div class="d-flex flex-wrap gap-2">
@@ -38,11 +68,15 @@
                 <h5 class="mt-4">Contexto Acadêmico</h5>
                 <p class="mb-1"><strong>Instituição:</strong> Centro Universitário Internacional UNINTER</p>
                 <p class="mb-1"><strong>Curso:</strong> CST em Análise e Desenvolvimento de Sistemas</p>
-                <p class="mb-1"><strong>Disciplina:</strong> Atividade Extensionista I — Tecnologia Aplicada à Inclusão Digital (Levantamento)</p>
+                <p class="mb-1"><strong>Disciplina:</strong> Atividade Extensionista I — Tecnologia Aplicada à Inclusão Digital</p>
                 <p class="mb-1"><strong>Aluno:</strong> Uilson Vasconcelos Neto — RU 1369200</p>
 
                 <h5 class="mt-4">Setor de Aplicação</h5>
-                <p>Setor Vicente Pires, Distrito Federal.</p>
+                <p class="mb-1">Setor Vicente Pires, Região Administrativa de Vicente Pires, Distrito Federal.</p>
+
+                <h5 class="mt-4">Contato dos Órgãos</h5>
+                <p class="mb-1"><strong>Administração Regional:</strong> ouvidoria@vicentepires.df.gov.br</p>
+                <p class="mb-0"><strong>Neoenergia Brasília:</strong> ouvidoria.bsb@neoenergia.com</p>
             </div>
         </div>
     </div>

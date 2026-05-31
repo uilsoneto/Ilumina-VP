@@ -18,6 +18,7 @@ spec:
       containers:
         - name: iluminavp
           image: uilsoneto/projetos:iluminavp
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           env:
