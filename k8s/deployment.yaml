@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iluminavp
+  namespace: iluminavp
+  labels:
+    app: iluminavp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iluminavp
+  template:
+    metadata:
+      labels:
+        app: iluminavp
+    spec:
+      containers:
+        - name: iluminavp
+          image: uilsoneto/projetos:iluminavp
+          ports:
+            - containerPort: 5001
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: iluminavp-secrets
+                  key: SECRET_KEY
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: iluminavp-secrets
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: iluminavp-secrets
+                  key: MAIL_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /app/instance
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: iluminavp-data
