@@ -27,6 +27,7 @@ def api_reports():
             "category": r.category_label,
             "status": r.status_label,
             "reporter": r.reporter_name,
+            "photo": r.photo_url,
             "created_at": r.created_at.strftime("%d/%m/%Y %H:%M"),
         }
         for r in reports

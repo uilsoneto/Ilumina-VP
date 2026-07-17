@@ -9,6 +9,11 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///ilumina_vp.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Upload de fotos
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "static", "uploads")
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
     # SMTP Gmail
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 587

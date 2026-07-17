@@ -37,7 +37,7 @@
         z-index: 1000;
     }
 
-    /* Popup form styling */
+    /* Popup styling */
     .leaflet-popup-content-wrapper {
         background: #1a1a2e;
         color: #f0f0f0;
@@ -52,7 +52,7 @@
 
     .leaflet-popup-content {
         margin: 12px 16px;
-        min-width: 260px;
+        min-width: 280px;
     }
 
     .leaflet-popup-content a {
@@ -85,6 +85,12 @@
         padding: 0.4rem 1rem;
     }
 
+    .popup-photo {
+        max-width: 100%;
+        border-radius: 6px;
+        margin-top: 6px;
+    }
+
     /* User location pulse */
     .user-location-marker {
         width: 18px;
@@ -107,7 +113,6 @@
             bottom: 80px;
             left: 10px;
         }
-
         .map-btn-report {
             bottom: 20px;
             right: 10px;
@@ -146,11 +151,56 @@
 
 {% block extra_scripts %}
 <script>
-    const map = L.map('map-home').setView([-15.8007, -48.0206], 14);
+    // Centro de Vicente Pires
+    const VP_CENTER = [-15.8007, -48.0206];
+    const VP_ZOOM = 15;
 
+    // Limites aproximados de Vicente Pires
+    const VP_BOUNDS = [
+        [-15.8200, -48.0450],  // SW
+        [-15.7800, -47.9950]   // NE
+    ];
+
+    const map = L.map('map-home', {
+        center: VP_CENTER,
+        zoom: VP_ZOOM,
+        maxBounds: [[-15.85, -48.07], [-15.75, -47.97]],
+        maxBoundsViscosity: 0.8,
+        minZoom: 13,
+        maxZoom: 19
+    });
+
+    // Tile layer OpenStreetMap padrão (claro e legível)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
     }).addTo(map);
+
+    // Contorno de Vicente Pires (poligono aproximado)
+    const vicentePiresBorder = L.polygon([
+        [-15.7850, -48.0380],
+        [-15.7840, -48.0200],
+        [-15.7870, -48.0050],
+        [-15.7950, -47.9980],
+        [-15.8100, -47.9990],
+        [-15.8180, -48.0080],
+        [-15.8190, -48.0250],
+        [-15.8150, -48.0380],
+        [-15.8050, -48.0420],
+        [-15.7920, -48.0410]
+    ], {
+        color: '#ffc107',
+        weight: 2,
+        opacity: 0.6,
+        fillColor: '#ffc107',
+        fillOpacity: 0.03,
+        dashArray: '8, 6'
+    }).addTo(map);
+    vicentePiresBorder.bindTooltip('Vicente Pires', {
+        permanent: false,
+        direction: 'center',
+        className: ''
+    });
 
     const categoryColors = {
         'Poste Apagado': '#dc3545',
@@ -176,7 +226,7 @@
         iconAnchor: [9, 9]
     });
 
-    // Mostra localização atual do usuário com balão
+    // Mostra localização atual do usuário
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(pos) {
             const userLat = pos.coords.latitude;
@@ -197,7 +247,6 @@
                 </div>
             `).openPopup();
         }, function() {
-            // Se não conseguir geolocalização, mostra balão no centro
             showDefaultPopup();
         });
     } else {
@@ -206,7 +255,7 @@
 
     function showDefaultPopup() {
         L.popup()
-            .setLatLng([-15.8007, -48.0206])
+            .setLatLng(VP_CENTER)
             .setContent(`
                 <div style="text-align:center;">
                     <h6 style="margin:0 0 4px; color:#ffc107;">
@@ -228,9 +277,16 @@
             data.forEach(report => {
                 const color = categoryColors[report.category] || '#dc3545';
                 const marker = L.marker([report.lat, report.lng], {icon: createIcon(color)}).addTo(map);
+
+                let photoHtml = '';
+                if (report.photo) {
+                    photoHtml = `<img src="${report.photo}" class="popup-photo" alt="Foto da ocorrência">`;
+                }
+
                 marker.bindPopup(`
                     <strong>${report.category}</strong><br>
-                    <small>${report.description}</small><br>
+                    <small>${report.description}</small>
+                    ${photoHtml}
                     <hr style="margin:6px 0; border-color:#2a2a4a;">
                     <small><b>Status:</b> ${report.status}</small><br>
                     <small><b>Por:</b> ${report.reporter}</small><br>
@@ -240,7 +296,7 @@
             });
         });
 
-    // Clique no mapa abre popup com formulário
+    // Clique no mapa abre popup com formulário (com upload de foto)
     let newMarker = null;
 
     map.on('click', function(e) {
@@ -254,7 +310,7 @@
         newMarker = L.marker(e.latlng).addTo(map);
 
         const formHtml = `
-            <form class="popup-form" method="POST" action="/reports/novo">
+            <form class="popup-form" method="POST" action="/reports/novo" enctype="multipart/form-data">
                 <h6 style="color:#ffc107; margin-bottom:8px;"><i class="bi bi-plus-circle"></i> Nova Ocorrência</h6>
                 <input type="hidden" name="latitude" value="${lat}">
                 <input type="hidden" name="longitude" value="${lng}">
@@ -279,13 +335,27 @@
                     <label class="form-label">Descrição</label>
                     <textarea class="form-control" name="description" rows="2" required placeholder="Descreva o problema..."></textarea>
                 </div>
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-camera"></i> Foto do local (opcional)</label>
+                    <div class="d-flex gap-1">
+                        <label class="btn btn-sm btn-outline-secondary flex-fill" style="font-size:0.75rem; cursor:pointer;">
+                            <i class="bi bi-camera-fill"></i> Tirar Foto
+                            <input type="file" name="photo" accept="image/*" capture="environment" style="display:none;" onchange="this.closest('form').querySelector('.photo-name').textContent = this.files[0]?.name || ''">
+                        </label>
+                        <label class="btn btn-sm btn-outline-secondary flex-fill" style="font-size:0.75rem; cursor:pointer;">
+                            <i class="bi bi-image"></i> Galeria
+                            <input type="file" name="photo" accept="image/*" style="display:none;" onchange="this.closest('form').querySelector('.photo-name').textContent = this.files[0]?.name || ''">
+                        </label>
+                    </div>
+                    <small class="photo-name text-muted" style="font-size:0.7rem;"></small>
+                </div>
                 <button type="submit" class="btn btn-warning btn-sm w-100">
                     <i class="bi bi-check-circle"></i> Registrar
                 </button>
             </form>
         `;
 
-        newMarker.bindPopup(formHtml, {maxWidth: 300, minWidth: 280}).openPopup();
+        newMarker.bindPopup(formHtml, {maxWidth: 320, minWidth: 290}).openPopup();
     });
 </script>
 {% endblock %}

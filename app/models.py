@@ -14,6 +14,7 @@ class Report(db.Model):
     status = db.Column(db.String(30), nullable=False, default="pendente")
     reporter_name = db.Column(db.String(150), nullable=False, default="Anônimo")
     reporter_email = db.Column(db.String(150), nullable=True)
+    photo_filename = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     CATEGORIES = [
@@ -36,3 +37,9 @@ class Report(db.Model):
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def photo_url(self):
+        if self.photo_filename:
+            return f"/static/uploads/{self.photo_filename}"
+        return None

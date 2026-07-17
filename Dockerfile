@@ -10,7 +10,7 @@ COPY run.py .
 COPY seed.py .
 COPY app/ app/
 
-RUN mkdir -p instance
+RUN mkdir -p instance app/static/uploads
 
 EXPOSE 5001
 

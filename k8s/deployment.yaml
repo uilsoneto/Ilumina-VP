@@ -40,6 +40,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/instance
+            - name: uploads
+              mountPath: /app/app/static/uploads
           resources:
             requests:
               memory: "64Mi"
@@ -51,3 +53,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: iluminavp-data
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: iluminavp-uploads
